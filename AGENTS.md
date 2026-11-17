@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Portfolio structure
+- Keep `/` as a client-only TanStack Start page because its interactive Three.js canvas cannot render during SSR; group portfolio sections and their shared visuals under `src/components/portfolio/` to keep the experience modular.
+- Drive Lenis from the GSAP ticker so cinematic scrolling shares one animation clock and avoids a separate per-frame loop.
