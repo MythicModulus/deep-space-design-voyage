@@ -1,19 +1,16 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Sparkles } from "@react-three/drei";
+import { Float, Sparkles as DreiSparkles } from "@react-three/drei";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowDown,
   ArrowDownRight,
-  ArrowRight,
   ArrowUpRight,
   Atom,
   Braces,
   Check,
-  ChevronDown,
   Code2,
   Cpu,
-  Download,
   ExternalLink,
   Github,
   GraduationCap,
@@ -27,7 +24,8 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useLenis } from "lenis/react";
+import { ReactLenis, useLenis } from "lenis/react";
+import gsap from "gsap";
 import {
   Suspense,
   useCallback,
@@ -35,6 +33,8 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +59,7 @@ const expertise = [
 
 const timeline = [
   {
-    date: "2024 — 2028",
+    date: "YEAR 02 · IN PROGRESS",
     title: "B.Tech · Artificial Intelligence & Data Science",
     place: "JECRC University",
     description: "Exploring computing, intelligent systems, and the foundations of data science.",
@@ -77,7 +77,7 @@ const timeline = [
 const roles = ["AI & Data Science Student", "Python Programmer", "Web Developer", "Problem Solver"];
 
 function SceneStarfield() {
-  const ref = useRef(null);
+  const ref = useRef<import("three").Points | null>(null);
   useFrame((state, delta) => {
     if (!ref.current) return;
     ref.current.rotation.y += delta * 0.009;
@@ -85,9 +85,9 @@ function SceneStarfield() {
   });
   return (
     <>
-      <Sparkles ref={ref} count={1850} scale={[40, 26, 28]} size={1.4} speed={0.1} opacity={0.54} color="#d5e6ff" />
-      <Sparkles count={250} scale={[25, 18, 20]} size={2.8} speed={0.17} opacity={0.44} color="#95bbff" />
-      <Sparkles count={42} scale={[12, 9, 11]} size={4} speed={0.08} opacity={0.27} color="#f4d8bd" />
+      <DreiSparkles ref={ref} count={1850} scale={[40, 26, 28]} size={1.4} speed={0.1} opacity={0.54} color="#d5e6ff" />
+      <DreiSparkles count={250} scale={[25, 18, 20]} size={2.8} speed={0.17} opacity={0.44} color="#95bbff" />
+      <DreiSparkles count={42} scale={[12, 9, 11]} size={4} speed={0.08} opacity={0.27} color="#f4d8bd" />
     </>
   );
 }
@@ -125,9 +125,9 @@ function LivingUniverse() {
 }
 
 function CoreObject() {
-  const shell = useRef(null);
-  const aura = useRef(null);
-  const satellites = useRef(null);
+  const shell = useRef<import("three").Mesh | null>(null);
+  const aura = useRef<import("three").Mesh | null>(null);
+  const satellites = useRef<import("three").Group | null>(null);
   useFrame((state, delta) => {
     if (shell.current) {
       shell.current.rotation.y += delta * 0.14;
@@ -181,7 +181,7 @@ function CoreObject() {
 function SceneCanvas({ core = false }: { core?: boolean }) {
   return (
     <Canvas camera={{ position: [0, 0, 5.1], fov: 42 }} dpr={[1, 1.4]} gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}>
-      {core ? <CoreObject /> : <LivingUniverse />}
+      {core ? <><ambientLight intensity={0.85} /><pointLight position={[3, 2, 4]} intensity={20} color="#b7d9ff" /><pointLight position={[-3, -2, -1]} intensity={13} color="#718edb" /><SceneStarfield /><CoreObject /></> : <LivingUniverse />}
       <EffectComposer multisampling={0}>
         <Bloom intensity={core ? 0.75 : 0.28} luminanceThreshold={0.32} luminanceSmoothing={0.82} mipmapBlur />
       </EffectComposer>
@@ -206,6 +206,18 @@ function useActiveSection() {
     return () => observer.disconnect();
   }, []);
   return active;
+}
+
+function LenisGsapTicker() {
+  const lenis = useLenis();
+  useEffect(() => {
+    if (!lenis) return;
+    const tick = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(tick);
+    gsap.ticker.lagSmoothing(0);
+    return () => gsap.ticker.remove(tick);
+  }, [lenis]);
+  return null;
 }
 
 function BootSequence({ onComplete }: { onComplete: () => void }) {
@@ -291,7 +303,7 @@ function CursorOrb({ ready }: { ready: boolean }) {
     let y = -80;
     let targetX = -80;
     let targetY = -80;
-    const move = (event: PointerEvent) => { targetX = event.clientX; targetY = event.clientY; };
+    const move = (event: globalThis.PointerEvent) => { targetX = event.clientX; targetY = event.clientY; };
     const tick = () => {
       x += (targetX - x) * 0.16;
       y += (targetY - y) * 0.16;
@@ -299,7 +311,7 @@ function CursorOrb({ ready }: { ready: boolean }) {
       lastPoint.current = { x: targetX, y: targetY };
       frame = requestAnimationFrame(tick);
     };
-    const over = (event: PointerEvent) => {
+    const over = (event: globalThis.PointerEvent) => {
       if (!(event.target instanceof Element)) return;
       orb.current?.classList.toggle("cursor-active", Boolean(event.target.closest("a, button, input, textarea, [data-cursor]")));
     };
@@ -316,10 +328,10 @@ function SectionEyebrow({ number, label, light = false }: { number: string; labe
   return <div className={`section-eyebrow ${light ? "section-eyebrow-light" : ""}`}><span>{number}</span><span className="eyebrow-rule" /><span>{label}</span></div>;
 }
 
-function MagneticButton({ href, children, variant = "default", target }: { href: string; children: React.ReactNode; variant?: "default" | "outline"; target?: string }) {
+function MagneticButton({ href, children, variant = "default", target }: { href: string; children: ReactNode; variant?: "default" | "outline"; target?: string }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const reduceMotion = useReducedMotion();
-  const move = (event: React.PointerEvent<HTMLAnchorElement>) => {
+  const move = (event: ReactPointerEvent<HTMLAnchorElement>) => {
     if (reduceMotion || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const x = event.clientX - rect.left - rect.width / 2;
@@ -339,7 +351,7 @@ function Hero({ loaded }: { loaded: boolean }) {
   }, []);
   return (
     <section id="top" className="hero-section">
-      <div className="hero-scene" aria-hidden="true"><Suspense fallback={null}><SceneCanvas /></Suspense></div>
+      <div className="hero-scene" aria-hidden="true"><Suspense fallback={null}><SceneCanvas core /></Suspense></div>
       <div className="hero-grain" aria-hidden="true" />
       <motion.div className="hero-content" initial="hidden" animate={loaded ? "show" : "hidden"} variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } } }}>
         <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.7 } } }} className="hero-pretitle"><span className="pretitle-dot" /> HUMAN CURIOSITY, ARTIFICIAL INTELLIGENCE <span className="pretitle-index">IND / 26</span></motion.div>
@@ -442,12 +454,14 @@ function Footer() {
 
 export function PortfolioExperience() {
   const [ready, setReady] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const active = useActiveSection();
-  const heroProgress = useRef(0);
-  const onProgress = useCallback((lenis: { progress: number }) => { heroProgress.current = lenis.progress; document.documentElement.style.setProperty("--flight-progress", String(lenis.progress)); }, []);
+  const onProgress = useCallback((lenis: { progress: number }) => { document.documentElement.style.setProperty("--flight-progress", String(lenis.progress)); }, []);
   useLenis(onProgress);
   useEffect(() => {
-    document.documentElement.dataset.motion = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "reduced" : "full";
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setPrefersReducedMotion(reducedMotion);
+    document.documentElement.setAttribute("data-motion", reducedMotion ? "reduced" : "full");
   }, []);
-  return <main className="portfolio-shell"><div className="cosmos-backdrop" aria-hidden="true"><Suspense fallback={null}><SceneCanvas /></Suspense></div><div className="cosmos-wash" aria-hidden="true" /><div className="cosmos-line cosmos-line-left" aria-hidden="true" /><div className="cosmos-line cosmos-line-right" aria-hidden="true" /><Navigation active={active} loaded={ready} /><BootSequence onComplete={() => setReady(true)} /><CursorOrb ready={ready} /><Hero loaded={ready} /><About /><Capabilities /><Experience /><Work /><Contact /><Footer /><a href="https://github.com/MythicModulus" className="back-to-top" aria-label="Visit Shyam’s GitHub profile" target="_blank" rel="noreferrer"><Github size={15} /><span>THE NEXT HORIZON</span><ExternalLink size={12} /></a></main>;
+  return <ReactLenis root options={{ autoRaf: false, smoothWheel: !prefersReducedMotion }}><LenisGsapTicker /><main className="portfolio-shell"><div className="cosmos-backdrop" aria-hidden="true"><Suspense fallback={null}><SceneCanvas /></Suspense></div><div className="cosmos-wash" aria-hidden="true" /><div className="cosmos-line cosmos-line-left" aria-hidden="true" /><div className="cosmos-line cosmos-line-right" aria-hidden="true" /><Navigation active={active} loaded={ready} /><BootSequence onComplete={() => setReady(true)} /><CursorOrb ready={ready} /><Hero loaded={ready} /><About /><Capabilities /><Experience /><Work /><Contact /><Footer /><a href="https://github.com/MythicModulus" className="back-to-top" aria-label="Visit Shyam’s GitHub profile" target="_blank" rel="noreferrer"><Github size={15} /><span>THE NEXT HORIZON</span><ExternalLink size={12} /></a></main></ReactLenis>;
 }

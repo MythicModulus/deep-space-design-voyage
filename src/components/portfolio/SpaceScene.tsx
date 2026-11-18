@@ -105,7 +105,6 @@ export function SpaceScene() {
       gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}
       onCreated={({ gl, scene }) => {
         gl.setClearColor(0x000000, 0);
-        scene.fog = undefined;
       }}
       aria-label="An animated, luminous AI core floating in a field of stars"
     >
