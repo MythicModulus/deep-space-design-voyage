@@ -180,7 +180,7 @@ function CoreObject() {
 
 function SceneCanvas({ core = false }: { core?: boolean }) {
   return (
-    <Canvas camera={{ position: [0, 0, 5.1], fov: 42 }} dpr={[1, 1.4]} gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}>
+    <Canvas camera={{ position: [0, 0, core ? 7.2 : 5.1], fov: 42 }} dpr={[1, 1.4]} gl={{ alpha: true, antialias: true, powerPreference: "low-power" }}>
       {core ? <><ambientLight intensity={0.85} /><pointLight position={[3, 2, 4]} intensity={20} color="#b7d9ff" /><pointLight position={[-3, -2, -1]} intensity={13} color="#718edb" /><SceneStarfield /><CoreObject /></> : <LivingUniverse />}
       <EffectComposer multisampling={0}>
         <Bloom intensity={core ? 0.75 : 0.28} luminanceThreshold={0.32} luminanceSmoothing={0.82} mipmapBlur />
